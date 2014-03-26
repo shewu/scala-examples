@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	http://www.steinbit.org/words/programming/setting-up-ant-for-your-scala-project
+-->
+<project name="starq" basedir="." default="build">
+	<property environment="env"/>
+
+	<property name="src.dir" location="${basedir}/src"/>
+	<property name="lib.dir" location="${basedir}/lib"/>
+	<property name="doc.dir" location="${basedir}/doc"/>
+	<property name="conf.dir" location="${basedir}/conf"/>
+	<property name="build.dir" location="${basedir}/build"/>
+	<property name="build-classes.dir" location="${build.dir}/classes"/>
+	<property name="build-lib.dir" location="${build.dir}/lib"/>
+	<property name="java.dir" location="${env.JAVA_HOME}"/>
+	<property name="scala.dir" location="${env.SCALA_HOME}"/>
+
+	<property name="scala-library.jar"
+			location="${scala.dir}/lib/scala-library.jar"/>
+	<property name="scala-reflect.jar"
+			location="${scala.dir}/lib/scala-reflect.jar"/>
+	<property name="scala-compiler.jar"
+			location="${scala.dir}/lib/scala-compiler.jar"/>
+
+	<path id="project.classpath">
+		<pathelement path="${scala-library.jar}"/>
+		<pathelement path="${build-classes.dir}"/>
+		<pathelement path="${conf.dir}"/>
+		<fileset dir="${lib.dir}">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<path id="scala.classpath">
+		<pathelement path="${scala-compiler.jar}"/>
+		<pathelement path="${scala-reflect.jar}"/>
+		<pathelement path="${scala-library.jar}"/>
+	</path>
+
+	<taskdef resource="scala/tools/ant/antlib.xml"
+			classpathref="scala.classpath"/>
+
+	<target name="build" depends="compile"
+			description="Build whole project"/>
+
+	<target name="clean"
+			description="Cleans up the build directory.">
+		<delete dir="${build-classes.dir}"/>
+		<delete dir="${build-lib.dir}"/>
+		<delete dir="${build.dir}"/>
+		<delete dir="${doc.dir}"/>
+	</target>
+
+	<target name="init">
+		<fail message="Missing SCALA_HOME variable in OS environment">
+			<condition>
+				<isset property="${env.SCALA_HOME}"/>
+			</condition>
+		</fail>
+		<fail message="Missing JAVA_HOME variable in OS environment">
+			<condition>
+				<isset property="${env.JAVA_HOME}"/>
+			</condition>
+		</fail>
+
+		<mkdir dir="${build.dir}"/>
+		<mkdir dir="${build-classes.dir}"/>
+		<mkdir dir="${build-lib.dir}"/>
+		<mkdir dir="${doc.dir}"/>
+
+		<echo message="Init project"/>
+		<echo message=" with scala.dir = ${scala.dir}"/>
+		<echo message=" with java.dir = ${java.dir}"/>
+
+		<uptodate property="build.uptodate"
+				targetfile="${build.dir}/build.done">
+			<srcfiles dir="${src.dir}" includes="**"/>
+		</uptodate>
+	</target>
+
+	<target name="compile"
+			depends="compile-examples-actors,compile-examples-remoteactors,compile-examples-chat"
+			unless="build.uptodate">
+		<touch file="${build.dir}/build.done"/>
+	</target>
+
+	<target name="compile-examples-actors" depends="init">
+		<scalac srcdir="${src.dir}/sandbox/actors"
+				destdir="${build-classes.dir}"
+				deprecation="yes"
+				includes="**/*.scala"
+				addparams="-feature"
+				classpathref="project.classpath"/>
+	</target>
+
+	<target name="compile-examples-remoteactors" depends="init">
+		<scalac srcdir="${src.dir}/sandbox/remoteactors"
+				destdir="${build-classes.dir}"
+				deprecation="yes"
+				includes="**/*.scala"
+				addparams="-feature"
+				classpathref="project.classpath"/>
+	</target>
+
+	<target name="compile-examples-chat" depends="init">
+		<scalac srcdir="${src.dir}/sandbox/chatclient"
+				destdir="${build-classes.dir}"
+				deprecation="yes"
+				includes="**/*.scala"
+				addparams="-feature"
+				classpathref="project.classpath"/>
+	</target>
+
+	<target name="doc" depends="compile">
+		<scaladoc srcdir="${src.dir}"
+				destdir="${doc.dir}"
+				doctitle="Scala Examples Documentation"
+				classpathref="project.classpath">
+			<include name="**/*.scala"/>
+		</scaladoc>
+	</target>
+
+	<target name="package" depends="doc">
+		<jar destfile="${build-lib.dir}/project.jar">
+			<fileset dir="${build-classes.dir}"/>
+		</jar>
+		<jar destfile="${build-lib.dir}/project-src.jar">
+			<fileset dir="${src.dir}" includes="**/*.scala"/>
+		</jar>
+		<jar destfile="${build-lib.dir}/project-doc.jar">
+			<fileset dir="${doc.dir}"/>
+		</jar>
+	</target>
+
+	<target name="run-local-pingpong" depends="compile-examples-actors">
+		<java classname="sandbox.actors.Main"
+				fork="true"
+				failonerror="true">
+			<classpath refid="project.classpath"/>
+		</java>
+	</target>
+
+	<target name="run-remote-pingpong"
+			depends="compile-examples-remoteactors">
+		<java classname="sandbox.remoteactors.Main"
+				fork="true"
+				failonerror="true">
+			<classpath refid="project.classpath"/>
+			<sysproperty key="config.resource" value="remoteactors.conf"/>
+		</java>
+	</target>
+
+	<target name="run-remote-pong"
+			depends="compile-examples-remoteactors">
+		<java classname="sandbox.remoteactors.RemotePongApp"
+				fork="true"
+				failonerror="true">
+			<classpath refid="project.classpath"/>
+			<sysproperty key="config.resource" value="remoteactors.conf"/>
+		</java>
+	</target>
+
+	<target name="run-remote-ping"
+			depends="compile-examples-remoteactors">
+		<java classname="sandbox.remoteactors.RemotePingApp"
+				fork="true"
+				failonerror="true">
+			<classpath refid="project.classpath"/>
+			<sysproperty key="config.resource" value="remoteactors.conf"/>
+		</java>
+	</target>
+
+	<target name="run-chat-demo" depends="compile-examples-chat">
+		<java classname="sandbox.chatclient.Main"
+				fork="true"
+				failonerror="true">
+			<classpath refid="project.classpath"/>
+			<sysproperty key="config.resource" value="chatclient.conf"/>
+		</java>
+	</target>
+
+	<target name="run-chat-server" depends="compile-examples-chat">
+		<java classname="sandbox.chatclient.ServerMain"
+				fork="true"
+				failonerror="true">
+			<classpath refid="project.classpath"/>
+			<sysproperty key="config.resource" value="chatclient.conf"/>
+		</java>
+	</target>
+</project>
