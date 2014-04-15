@@ -79,36 +79,15 @@
 	</target>
 
 	<target name="compile"
-			depends="compile-examples-actors,compile-examples-remoteactors,compile-examples-chat"
+			depends="init"
 			unless="build.uptodate">
+		<scalac srcdir="${src.dir}/sandbox"
+				destdir="${build-classes.dir}"
+				deprecation="yes"
+				includes="**/*.scala"
+				addparams="-feature"
+				classpathref="project.classpath"/>
 		<touch file="${build.dir}/build.done"/>
-	</target>
-
-	<target name="compile-examples-actors" depends="init">
-		<scalac srcdir="${src.dir}/sandbox/actors"
-				destdir="${build-classes.dir}"
-				deprecation="yes"
-				includes="**/*.scala"
-				addparams="-feature"
-				classpathref="project.classpath"/>
-	</target>
-
-	<target name="compile-examples-remoteactors" depends="init">
-		<scalac srcdir="${src.dir}/sandbox/remoteactors"
-				destdir="${build-classes.dir}"
-				deprecation="yes"
-				includes="**/*.scala"
-				addparams="-feature"
-				classpathref="project.classpath"/>
-	</target>
-
-	<target name="compile-examples-chat" depends="init">
-		<scalac srcdir="${src.dir}/sandbox/chatclient"
-				destdir="${build-classes.dir}"
-				deprecation="yes"
-				includes="**/*.scala"
-				addparams="-feature"
-				classpathref="project.classpath"/>
 	</target>
 
 	<target name="doc" depends="compile">
@@ -132,7 +111,7 @@
 		</jar>
 	</target>
 
-	<target name="run-local-pingpong" depends="compile-examples-actors">
+	<target name="run-local-pingpong" depends="compile">
 		<java classname="sandbox.actors.Main"
 				fork="true"
 				failonerror="true">
@@ -140,8 +119,7 @@
 		</java>
 	</target>
 
-	<target name="run-remote-pingpong"
-			depends="compile-examples-remoteactors">
+	<target name="run-remote-pingpong" depends="compile">
 		<java classname="sandbox.remoteactors.Main"
 				fork="true"
 				failonerror="true">
@@ -150,8 +128,7 @@
 		</java>
 	</target>
 
-	<target name="run-remote-pong"
-			depends="compile-examples-remoteactors">
+	<target name="run-remote-pong" depends="compile">
 		<java classname="sandbox.remoteactors.RemotePongApp"
 				fork="true"
 				failonerror="true">
@@ -160,8 +137,7 @@
 		</java>
 	</target>
 
-	<target name="run-remote-ping"
-			depends="compile-examples-remoteactors">
+	<target name="run-remote-ping" depends="compile">
 		<java classname="sandbox.remoteactors.RemotePingApp"
 				fork="true"
 				failonerror="true">
@@ -170,7 +146,7 @@
 		</java>
 	</target>
 
-	<target name="run-chat-demo" depends="compile-examples-chat">
+	<target name="run-chat-demo" depends="compile">
 		<java classname="sandbox.chatclient.Main"
 				fork="true"
 				failonerror="true">
@@ -179,7 +155,7 @@
 		</java>
 	</target>
 
-	<target name="run-chat-server" depends="compile-examples-chat">
+	<target name="run-chat-server" depends="compile">
 		<java classname="sandbox.chatclient.ServerMain"
 				fork="true"
 				failonerror="true">
